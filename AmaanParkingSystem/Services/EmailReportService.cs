@@ -259,7 +259,7 @@ namespace AmaanParkingSystem.Services
 
             string[] headers =
             {
-                "Trans ID", "Card Name", "Entry Time", "Type", "Source",
+                "Trans ID", "Card Name", "Plate No", "Entry Time", "Type", "Source",
                 "Val. Time", "Val. Charges", "Val. Paymode",
                 "Reval. Time", "Reval. Charges", "Reason", "Remark"
             };
@@ -277,18 +277,19 @@ namespace AmaanParkingSystem.Services
             {
                 worksheet.Cell(row, 1).SetValue(item.transaction_id?.ToString() ?? "");
                 worksheet.Cell(row, 2).SetValue(item.cardname?.ToString() ?? "");
-                worksheet.Cell(row, 3).SetValue(item.entry_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
-                worksheet.Cell(row, 4).SetValue(item.transaction_type?.ToString() ?? "");
-                worksheet.Cell(row, 5).SetValue(item.payment_source?.ToString() ?? "");
+                worksheet.Cell(row, 3).SetValue(GetPlateNo((object)item));
+                worksheet.Cell(row, 4).SetValue(item.entry_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
+                worksheet.Cell(row, 5).SetValue(item.transaction_type?.ToString() ?? "");
+                worksheet.Cell(row, 6).SetValue(item.payment_source?.ToString() ?? "");
 
-                worksheet.Cell(row, 6).SetValue(item.validation_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
-                worksheet.Cell(row, 7).SetValue(Convert.ToDouble(item.validation_charges ?? 0));
-                worksheet.Cell(row, 8).SetValue(item.validation_paymode?.ToString() ?? "");
+                worksheet.Cell(row, 7).SetValue(item.validation_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
+                worksheet.Cell(row, 8).SetValue(Convert.ToDouble(item.validation_charges ?? 0));
+                worksheet.Cell(row, 9).SetValue(item.validation_paymode?.ToString() ?? "");
 
-                worksheet.Cell(row, 9).SetValue(item.revalidation_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
-                worksheet.Cell(row, 10).SetValue(Convert.ToDouble(item.revalidation_charges ?? 0));
-                worksheet.Cell(row, 11).SetValue(item.reason?.ToString() ?? "");
-                worksheet.Cell(row, 12).SetValue(item.remark?.ToString() ?? "");
+                worksheet.Cell(row, 10).SetValue(item.revalidation_time?.ToString("dd-MMM-yyyy HH:mm:ss") ?? "--");
+                worksheet.Cell(row, 11).SetValue(Convert.ToDouble(item.revalidation_charges ?? 0));
+                worksheet.Cell(row, 12).SetValue(item.reason?.ToString() ?? "");
+                worksheet.Cell(row, 13).SetValue(item.remark?.ToString() ?? "");
                 row++;
             }
 
@@ -304,6 +305,36 @@ namespace AmaanParkingSystem.Services
         /// Mirrors ExportLowBalanceReport in LowBalanceAlertsController exactly.
         /// Default threshold: 500. Fetches ALL card types (no filter).
         /// </summary>
+        /// 
+        // NEW: reads plate no safely from the FOC row (works for dynamic/dictionary/typed rows)
+        private static string GetPlateNo(object item)
+        {
+            if (item == null) return "";
+
+            string[] names = { "car_plate_no", "plate_no", "plateno", "PlateNo", "car_plate_number", "plate_number", "lpr_no" };
+
+            if (item is IDictionary<string, object> dict)
+            {
+                foreach (var n in names)
+                {
+                    var key = dict.Keys.FirstOrDefault(k => string.Equals(k, n, StringComparison.OrdinalIgnoreCase));
+                    if (key != null) return dict[key]?.ToString() ?? "";
+                }
+                return "";
+            }
+
+            var type = item.GetType();
+            foreach (var n in names)
+            {
+                var p = type.GetProperty(n,
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.IgnoreCase);
+                if (p != null) return p.GetValue(item)?.ToString() ?? "";
+            }
+            return "";
+        }
+
         private async Task<byte[]> GenerateLowBalanceExcel(decimal threshold = 500m)
         {
             using var conn = GetConnection();
