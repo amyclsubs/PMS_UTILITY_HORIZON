@@ -158,7 +158,6 @@ namespace AmaanParkingSystem.Services
         }
 
 
-
         /// <summary>
         /// Send Daily Transactions Report to selected sites
         /// </summary>
@@ -1518,7 +1517,7 @@ namespace AmaanParkingSystem.Services
                 <strong>{date:dd-MMMM-yyyy}</strong>.
             </p>
             
-            <div style='background: #ecf0f1; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;'>
+            <div style='background: #ecf0f1; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;'>  
                 <p style='margin: 0; font-size: 14px;'>
                     <strong>Report Type:</strong> {reportType}<br>
                     <strong>Date:</strong> {date:dd-MMMM-yyyy}<br>
